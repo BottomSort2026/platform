@@ -1,0 +1,12 @@
+[submodule "api-gateway"]
+	path = api-gateway
+	url = https://github.com/BottomSort2026/api-gateway
+[submodule "mcp"]
+	path = mcp
+	url = https://github.com/BottomSort2026/mcp
+[submodule "data"]
+	path = data
+	url = https://github.com/BottomSort2026/data
+[submodule "engine"]
+	path = engine
+	url = https://github.com/BottomSort2026/engine
