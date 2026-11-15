@@ -1,0 +1,48 @@
+# Flame in Freefall — platform Compose: gateway, mcp, engine.
+# The frontend is NOT containerized here: serve it separately (frontend/Dockerfile or `pnpm dev`)
+# and point it at the gateway on http://localhost:8080 (VITE_API_URL=/, GATEWAY_URL=http://localhost:8080).
+# Only the gateway publishes a port to the host (ARCHITECTURE.md §5, DECIDED).
+# Copy .env.example to .env to set LLM_URL / LLM_MODEL; without them, /chat needs an Ollama
+# on the host at the default port.
+
+services:
+  gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:3000"
+    environment:
+      ML_URL: http://engine:8000
+      MCP_URL: http://mcp:8001
+    depends_on:
+      engine:
+        condition: service_healthy
+      mcp:
+        condition: service_healthy
+
+  mcp:
+    build: ./mcp
+    environment:
+      ENGINE_URL: http://engine:8000
+      # Default assumes Ollama on the Docker host. Override in platform/.env.
+      LLM_URL: ${LLM_URL:-http://host.docker.internal:11434/v1/chat/completions}
+      LLM_MODEL: ${LLM_MODEL:-llama3.1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      engine:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  engine:
+    build: ./engine
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
