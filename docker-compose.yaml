@@ -27,6 +27,7 @@ services:
       LLM_URL: ${LLM_URL:-http://host.docker.internal:11434/v1/chat/completions}
       LLM_MODEL: ${LLM_MODEL:-llama3.1}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      PREDICT_ENABLED: ${PREDICT_ENABLED:-false}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
